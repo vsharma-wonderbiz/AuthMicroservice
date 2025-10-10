@@ -28,10 +28,10 @@ namespace AuthMicroservice.Extension
                 cfg.AddMaps(typeof(MappingProfile).Assembly);
             });
 
-            return services; // Correct return
+            return services; 
         }
 
-        // ✅ Authentication & Authorization
+        
         public static IServiceCollection AddCustomAuthentication(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddAuthentication(options =>

@@ -31,11 +31,11 @@ builder.Services.AddDbContext<UserDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultStr"),
         sqlOptions =>
         {
-            sqlOptions.MigrationsAssembly(typeof(UserDbContext).Assembly.FullName); // point migrations to Infrastructure
+            sqlOptions.MigrationsAssembly(typeof(UserDbContext).Assembly.FullName); 
         }
     )
     .ConfigureWarnings(warnings =>
-        warnings.Ignore(RelationalEventId.CommandExecuting)) // suppress SQL command logs if you want
+        warnings.Ignore(RelationalEventId.CommandExecuting)) 
 );
 
 
@@ -60,7 +60,6 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -78,8 +77,8 @@ using (var scope = app.Services.CreateScope())
     try
     {
         await DefaultAsset.SeedAsync(context);
-        //var dummySeeder = new DummySeed();               // ✅ Create instance
-        //await dummySeeder.SeedDummyDataAsync(context);// <-- Call your seed class
+        //var dummySeeder = new DummySeed();               
+        //await dummySeeder.SeedDummyDataAsync(context);
     }
     catch (Exception ex)
     {

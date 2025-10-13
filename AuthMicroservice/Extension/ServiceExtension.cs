@@ -17,12 +17,12 @@ namespace AuthMicroservice.Extension
     {
         public static IServiceCollection AddCustomServices(this IServiceCollection services)
         {
-            // Repositories & Services
+           
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IOAuthUserRepository, OAuthUserRepository>();
             services.AddScoped<IUserService, UserService>();
 
-            // AutoMapper
+            
             services.AddAutoMapper(cfg =>
             {
                 cfg.AddMaps(typeof(MappingProfile).Assembly);
@@ -87,14 +87,14 @@ namespace AuthMicroservice.Extension
                 options.SaveTokens = true;
             });
 
-            // Authorization
+           
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
                 options.AddPolicy("ManagerOrAdmin", policy => policy.RequireRole("Manager", "Admin"));
             });
 
-            return services; // Return services for chaining
+            return services; 
         }
     }
 }

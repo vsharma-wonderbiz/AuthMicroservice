@@ -83,7 +83,7 @@ namespace AuthMicroservice.Extension
             {
                 options.ClientId = configuration["Authentication:Google:ClientId"];
                 options.ClientSecret = configuration["Authentication:Google:ClientSecret"];
-                options.CallbackPath = "/callback";
+                options.CallbackPath ="/callback";
                 options.SaveTokens = true;
             });
 

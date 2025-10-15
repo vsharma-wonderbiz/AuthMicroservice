@@ -137,7 +137,7 @@ namespace AuthMicroservice.Controllers
         {
             var properties = new AuthenticationProperties
             {
-                RedirectUri = Url.Action("GoogleCallback")
+                RedirectUri = Url.Action("callback")
             };
             return Challenge(properties, GoogleDefaults.AuthenticationScheme);
         }

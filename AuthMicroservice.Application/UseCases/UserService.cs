@@ -12,6 +12,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.ComponentModel.DataAnnotations;
 
 namespace AuthMicroservice.Application.UseCases
 {
@@ -21,13 +22,17 @@ namespace AuthMicroservice.Application.UseCases
         private readonly IOAuthUserRepository _oAuthUserRepository;
         private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
+        private readonly IUserOtpRepository _userOtpRepository;
+        private readonly IEamilService _eamilService;
 
-        public UserService(IUserRepository userRepository, IOAuthUserRepository oAuthUserRepository, IMapper mapper, IConfiguration configuration)
+        public UserService(IUserRepository userRepository, IOAuthUserRepository oAuthUserRepository, IMapper mapper, IConfiguration configuration, IUserOtpRepository userOtpRepository,IEamilService eamilService)
         {
             _userRepository = userRepository;
             _oAuthUserRepository = oAuthUserRepository;
             _mapper = mapper;
             _configuration = configuration;
+            _userOtpRepository = userOtpRepository;
+            _eamilService = eamilService;
         }
 
         public async Task<List<UserDto>> GetAllAsync()
@@ -94,7 +99,9 @@ namespace AuthMicroservice.Application.UseCases
             await _userRepository.DeleteAsync(id);
         }
 
-        public async Task<(string AccessToken, string RefreshToken)> LoginAsync(LoginDto loginDto)
+
+        //<(string AccessToken, string RefreshToken)>
+        public async Task<string> LoginAsync(LoginDto loginDto)
         {
             if (string.IsNullOrEmpty(loginDto.Email) || string.IsNullOrEmpty(loginDto.Password))
                 throw new Exception("Email and password are required.");
@@ -103,12 +110,33 @@ namespace AuthMicroservice.Application.UseCases
             if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
                 throw new Exception("Invalid email or password.");
 
-            var (accessToken, refreshToken) = GenerateTokens(user);
-            user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7);
-            await _userRepository.UpdateAsync(user);
+            int otp = CreateOtpAndSendOtp();
 
-            return (accessToken, refreshToken);
+            var newOtpForUSer = new UserOtp
+            {
+                UserOtpID = new Guid(),
+                Email = loginDto.Email,
+                Otp = otp,
+                ExpiryAt = DateTime.UtcNow.AddMinutes(5),
+                CreatedAt = DateTime.UtcNow,
+                IsUsed = false
+            };
+
+            string subject = "Your OTP Code";
+            string message = $"Your OTP for login is: {otp}. It is valid for 5 minutes.";
+
+            await _eamilService.SendEmailAsync(loginDto.Email, "Otp for auth", message);
+
+            await _userOtpRepository.AddOtp(newOtpForUSer);
+
+            //var (accessToken, refreshToken) = GenerateTokens(user);
+            //user.RefreshToken = refreshToken;
+            //user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7);
+            //await _userRepository.UpdateAsync(user);
+
+            //return (accessToken, refreshToken);
+
+            return "Otp has been sucessfully Send to your Mail";
         }
 
         public async Task<(string AccessToken, OAuthUserDto OAuthUser)> HandleGoogleCallbackAsync(AuthenticationTicket ticket)
@@ -294,6 +322,43 @@ namespace AuthMicroservice.Application.UseCases
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
+        }
+
+
+        public async Task<(string AccessToken, string RefreshToken)> VerifyOtpAndGenerateJwt(OtpDto dto)
+        {
+            var otpRecord = await _userOtpRepository.GetLatestOtp(dto.Email);
+
+            if (otpRecord == null)
+                throw new Exception("OTP not found");
+
+            if (otpRecord.IsUsed)
+                throw new Exception("OTP already used");
+
+            if (otpRecord.ExpiryAt < DateTime.UtcNow)
+                throw new Exception("OTP expired");
+
+            if (otpRecord.Otp != dto.Otp)
+                throw new Exception("Invalid OTP");
+
+            otpRecord.IsUsed = true;
+            await _userOtpRepository.MarkUse(otpRecord.UserOtpID);
+
+            var user = await _userRepository.GetByEmailAsync(dto.Email);
+
+            var (accessToken, refreshToken) = GenerateTokens(user);
+
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7);
+            await _userRepository.UpdateAsync(user);
+
+            return (accessToken, refreshToken);
+        }
+        public static int CreateOtpAndSendOtp()
+        {
+            var randon = new Random();
+            int otp = randon.Next(100000, 999999);
+            return otp;
         }
     }
 }

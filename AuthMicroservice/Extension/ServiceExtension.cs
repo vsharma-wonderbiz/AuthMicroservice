@@ -21,6 +21,8 @@ namespace AuthMicroservice.Extension
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IOAuthUserRepository, OAuthUserRepository>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IUserOtpRepository, UserOtpRepository>();
+            services.AddScoped<IEamilService, EmailService>();
 
             
             services.AddAutoMapper(cfg =>

@@ -91,6 +91,10 @@ app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
+
+app.UseCors("AllowFrontend");
+
+
 app.MapControllers();
 
 app.Run();

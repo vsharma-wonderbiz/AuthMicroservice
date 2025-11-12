@@ -170,7 +170,7 @@ namespace AuthMicroservice.Controllers
                 };
                 Response.Cookies.Append("access_token", accessToken, cookieOption);
 
-                return Redirect("http://localhost:5175/Dashboard?googleLogin=true");
+                return Redirect("http://localhost:3000/Dashboard?googleLogin=true");
             }
             catch (Exception ex)
             {

@@ -101,43 +101,38 @@ namespace AuthMicroservice.Controllers
         [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
-            ////try
-            ////{
-            ////    var (accessToken, refreshToken) = await _userService.LoginAsync(loginDto);
-
-            ////    var accessCookieOption = new CookieOptions
-            ////    {
-            ////        HttpOnly = true,
-            ////        Secure = true,
-            ////        SameSite = SameSiteMode.None,
-            ////        Path = "/",
-            ////        MaxAge = TimeSpan.FromHours(1)
-            ////    };
-            ////    Response.Cookies.Append("access_token", accessToken, accessCookieOption);
-
-            ////    var refreshCookieOption = new CookieOptions
-            ////    {
-            ////        HttpOnly = true,
-            ////        Secure = true,
-            ////        SameSite = SameSiteMode.None,
-            ////        Path = "/",
-            ////        Expires = DateTime.UtcNow.AddDays(7)
-            ////    };
-            ////    Response.Cookies.Append("refresh_token", refreshToken, refreshCookieOption);
-
-            //    //return Ok(new { access_token = accessToken, refresh_token = refreshToken, message = "Login successful" });
-            //}
-
             try
             {
-                var Message =await _userService.LoginAsync(loginDto);
-                return Ok(Message);
+                var (accessToken, refreshToken) = await _userService.LoginAsync(loginDto);
+
+                var accessCookieOption = new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Path = "/",
+                    MaxAge = TimeSpan.FromHours(1)
+                };
+                Response.Cookies.Append("access_token", accessToken, accessCookieOption);
+
+                var refreshCookieOption = new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Path = "/",
+                    Expires = DateTime.UtcNow.AddDays(7)
+                };
+                Response.Cookies.Append("refresh_token", refreshToken, refreshCookieOption);
+
+                return Ok(new { access_token = accessToken, refresh_token = refreshToken, message = "Login successful" });
             }
             catch (Exception ex)
             {
                 return BadRequest(new { Message = ex.Message });
             }
         }
+
 
         [HttpGet("login-google")]
         public IActionResult GoogleLogin()
@@ -285,13 +280,13 @@ namespace AuthMicroservice.Controllers
                 Response.Cookies.Append("refresh_token", refreshToken, refreshCookieOption);
                 return Ok(new { access_token = accessToken, refresh_token = refreshToken, message = "Login successful" });
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return BadRequest(new { Message = ex.Message });
             }
-      
-            
-            }
+
+
+        }
 
     }
 }

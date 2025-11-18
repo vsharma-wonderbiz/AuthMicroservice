@@ -25,7 +25,7 @@ namespace AuthMicroservice.Application.UseCases
         private readonly IUserOtpRepository _userOtpRepository;
         private readonly IEamilService _eamilService;
 
-        public UserService(IUserRepository userRepository, IOAuthUserRepository oAuthUserRepository, IMapper mapper, IConfiguration configuration, IUserOtpRepository userOtpRepository,IEamilService eamilService)
+        public UserService(IUserRepository userRepository, IOAuthUserRepository oAuthUserRepository, IMapper mapper, IConfiguration configuration, IUserOtpRepository userOtpRepository, IEamilService eamilService)
         {
             _userRepository = userRepository;
             _oAuthUserRepository = oAuthUserRepository;
@@ -100,44 +100,28 @@ namespace AuthMicroservice.Application.UseCases
         }
 
 
-        //<(string AccessToken, string RefreshToken)>
-        public async Task<string> LoginAsync(LoginDto loginDto)
+        public async Task<(string AccessToken, string RefreshToken)> LoginAsync(LoginDto loginDto)
         {
-            if (string.IsNullOrEmpty(loginDto.Email) || string.IsNullOrEmpty(loginDto.Password))
+            if (string.IsNullOrWhiteSpace(loginDto.Email) || string.IsNullOrWhiteSpace(loginDto.Password))
                 throw new Exception("Email and password are required.");
 
             var user = await _userRepository.GetByEmailAsync(loginDto.Email);
             if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
                 throw new Exception("Invalid email or password.");
 
-            int otp = CreateOtpAndSendOtp();
+            // Generate tokens (you already have this method implemented)
+            var (accessToken, refreshToken) = GenerateTokens(user);
 
-            var newOtpForUSer = new UserOtp
-            {
-                UserOtpID = new Guid(),
-                Email = loginDto.Email,
-                Otp = otp,
-                ExpiryAt = DateTime.UtcNow.AddMinutes(5),
-                CreatedAt = DateTime.UtcNow,
-                IsUsed = false
-            };
+            // Hash and store refresh token in the existing RefreshToken column
+            user.RefreshToken = HashToken(refreshToken);
+            user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7); // use config instead of hardcoded value
+            await _userRepository.UpdateAsync(user);
 
-            string subject = "Your OTP Code";
-            string message = $"Your OTP for login is: {otp}. It is valid for 5 minutes.";
-
-            await _eamilService.SendEmailAsync(loginDto.Email, "Otp for auth", message);
-
-            await _userOtpRepository.AddOtp(newOtpForUSer);
-
-            //var (accessToken, refreshToken) = GenerateTokens(user);
-            //user.RefreshToken = refreshToken;
-            //user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7);
-            //await _userRepository.UpdateAsync(user);
-
-            //return (accessToken, refreshToken);
-
-            return "Otp has been sucessfully Send to your Mail";
+            return (accessToken, refreshToken); // return raw refreshToken to client (cookie)
         }
+
+
+
 
         public async Task<(string AccessToken, OAuthUserDto OAuthUser)> HandleGoogleCallbackAsync(AuthenticationTicket ticket)
         {
@@ -354,11 +338,29 @@ namespace AuthMicroservice.Application.UseCases
 
             return (accessToken, refreshToken);
         }
-        public static int CreateOtpAndSendOtp()
+
+
+
+
+
+        private static string HashToken(string token)
         {
-            var randon = new Random();
-            int otp = randon.Next(100000, 999999);
-            return otp;
+            if (string.IsNullOrEmpty(token)) return string.Empty;
+            using var sha = SHA256.Create();
+            var bytes = Encoding.UTF8.GetBytes(token);
+            var hash = sha.ComputeHash(bytes);
+            return Convert.ToBase64String(hash);
         }
+
+        private static bool VerifyHashedToken(string token, string? storedHash)
+        {
+            if (string.IsNullOrEmpty(storedHash)) return false;
+            var candidateHash = HashToken(token);
+            return CryptographicOperations.FixedTimeEquals(
+                Encoding.UTF8.GetBytes(candidateHash),
+                Encoding.UTF8.GetBytes(storedHash));
+        }
+
+
     }
 }

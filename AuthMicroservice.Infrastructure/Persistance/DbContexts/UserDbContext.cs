@@ -24,8 +24,22 @@ namespace AuthMicroservice.Infrastructure.Persistance.DbContexts
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(UserDbContext).Assembly);
+
+            // Ensure RefreshToken column length and add index for quick lookup
+            modelBuilder.Entity<User>(b =>
+            {
+                b.Property(u => u.RefreshToken)
+                 .HasMaxLength(255)
+                 .IsUnicode(false); // hashed base64 is ASCII — storing as non-Unicode is fine
+
+                b.HasIndex(u => u.RefreshToken)
+                 .HasDatabaseName("IX_Users_RefreshToken");
+            });
+
+            // Optional: configure UserId PK type if needed, etc.
             base.OnModelCreating(modelBuilder);
         }
+
 
 
     }

@@ -16,13 +16,21 @@ namespace AuthMicroservice.Application.Interface
         Task<UserDto> CreateAsync(CreateUserDto createUserDto);
         Task UpdateAsync(int id, UpdateUserDto updateUserDto);
         Task DeleteAsync(int id);
-        //Task<(string AccessToken, string RefreshToken)> LoginAsync(LoginDto loginDto);
 
+        // Returns access + refresh tokens for normal login (email/password)
+        Task<(string AccessToken, string RefreshToken)> LoginAsync(LoginDto loginDto);
+
+        // OTP flow
         Task<(string AccessToken, string RefreshToken)> VerifyOtpAndGenerateJwt(OtpDto dto);
-        Task<string> LoginAsync(LoginDto loginDto);
+
+        // OAuth flow (Google) returns JWT for OAuth user + DTO
         Task<(string AccessToken, OAuthUserDto OAuthUser)> HandleGoogleCallbackAsync(AuthenticationTicket ticket);
+
+        // Refresh and logout
         Task<(string AccessToken, string RefreshToken)> RefreshTokenAsync(string refreshToken);
         Task LogoutAsync(string refreshToken);
+
+        // Current user from claims
         Task<UserDto> GetCurrentUserAsync(ClaimsIdentity identity);
     }
 }

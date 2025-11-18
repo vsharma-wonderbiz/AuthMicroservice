@@ -6,40 +6,50 @@ using AuthMicroservice.Application.Mapping;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using AuthMicroservice.Infrastructure.Persistance.seeding;
 
+using Serilog;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Resources;
+using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// ---------- Serilog ----------
+Log.Logger = new LoggerConfiguration()
+    .Enrich.FromLogContext()
+    .Enrich.WithProperty("Service", "auth-service")
+    .WriteTo.Console()
+    .WriteTo.Seq(builder.Configuration["Seq:Url"] ?? "http://seq:5341")
+    .CreateLogger();
+builder.Host.UseSerilog();
 
+builder.Services.AddHttpClient("Ocelot")
+    .ConfigurePrimaryHttpMessageHandler(() =>
+        new HttpClientHandler { ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator });
+
+
+// ---------- Services ----------
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-
-
-
 builder.Services.AddCustomServices();
 builder.Services.AddCustomAuthentication(builder.Configuration);
-//builder.Services.AddHostedService<AverageProcessorService>();
-
 
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
+// DbContext
 builder.Services.AddDbContext<UserDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultStr"),
         sqlOptions =>
         {
-            sqlOptions.MigrationsAssembly(typeof(UserDbContext).Assembly.FullName); 
-        }
-    )
-    .ConfigureWarnings(warnings =>
-        warnings.Ignore(RelationalEventId.CommandExecuting)) 
+            // ensure migrations go into the infrastructure assembly
+            sqlOptions.MigrationsAssembly(typeof(UserDbContext).Assembly.FullName);
+        })
+    .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.CommandExecuting))
 );
 
-
-
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -58,43 +68,103 @@ builder.Services.AddCors(options =>
 
 
 
+// ---------- OpenTelemetry ----------
+var jaegerHost = builder.Configuration["Jaeger:Host"] ?? "localhost";
+var jaegerPort = int.TryParse(builder.Configuration["Jaeger:Port"], out var p) ? p : 6831;
+
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(builder =>
+    {
+        builder
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddSource("auth-service")
+            .SetResourceBuilder(
+                ResourceBuilder.CreateDefault().AddService("auth-service"))
+            .AddJaegerExporter();
+    });
+
+// ---------- Build app ----------
 var app = builder.Build();
 
+// ---------- Optional: apply migrations on startup (dev convenience) ----------
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<UserDbContext>();
+
+        // apply migrations (remove or guard in production)
+        try
+        {
+            context.Database.Migrate();
+        }
+        catch (Exception migEx)
+        {
+            var mLogger = services.GetRequiredService<ILogger<Program>>();
+            mLogger.LogWarning(migEx, "Database migrate failed at startup (continuing).");
+        }
+
+        // seeding
+        try
+        {
+            await DefaultAsset.SeedAsync(context);
+        }
+        catch (Exception seedEx)
+        {
+            var logger = services.GetRequiredService<ILogger<Program>>();
+            logger.LogError(seedEx, "❌ An error occurred while seeding the database.");
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger = app.Services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Failed to prepare DB/seed at startup.");
+    }
+}
+
+// ---------- Middleware pipeline ----------
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+// Serilog request logging
+app.UseSerilogRequestLogging();
 
-
-
-using (var scope = app.Services.CreateScope())
+// Add a request-id + put TraceId into log context
+app.Use(async (ctx, next) =>
 {
-    var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<UserDbContext>();
+    // propagate X-Request-ID or create one
+    var requestId = ctx.Request.Headers.ContainsKey("X-Request-ID")
+        ? ctx.Request.Headers["X-Request-ID"].ToString()
+        : Guid.NewGuid().ToString("N");
 
-    try
+    ctx.Response.Headers["X-Request-ID"] = requestId;
+
+    // prefer Activity.Current.TraceId when available (OTel)
+    var traceId = Activity.Current?.TraceId.ToString() ?? requestId;
+
+    using (Serilog.Context.LogContext.PushProperty("RequestId", requestId))
+    using (Serilog.Context.LogContext.PushProperty("TraceId", traceId))
     {
-        await DefaultAsset.SeedAsync(context);
-        //var dummySeeder = new DummySeed();               
-        //await dummySeeder.SeedDummyDataAsync(context);
+        await next();
     }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "❌ An error occurred while seeding the database.");
-    }
-}
+});
+
+// Important order: CORS → Authentication → Authorization
+app.UseCors("AllowFrontend");
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
-
-
-app.UseCors("AllowFrontend");
-
-
 app.MapControllers();
+
+
 
 app.Run();

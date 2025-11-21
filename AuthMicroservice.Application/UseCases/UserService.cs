@@ -13,6 +13,7 @@ using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.ComponentModel.DataAnnotations;
+using Jose;
 
 namespace AuthMicroservice.Application.UseCases
 {
@@ -236,17 +237,32 @@ namespace AuthMicroservice.Application.UseCases
         private (string AccessToken, string RefreshToken) GenerateTokens(User user)
         {
             var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]);
+            var EmailEncrptkey = Encoding.UTF8.GetBytes(_configuration["Jwt:EncryptionKey"]);
             var tokenHandler = new JwtSecurityTokenHandler();
+
+            var privateData = new
+            {
+                email = user.Email,
+            };
+
+
+            string encryotedemail = Jose.JWT.Encode(
+                   privateData,
+                   EmailEncrptkey,
+                   JweAlgorithm.A256KW,
+                   JweEncryption.A256CBC_HS512
+                );
+
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new[]
                 {
                     new Claim(ClaimTypes.Name, user.Username),
                     new Claim(ClaimTypes.Role, user.Role),
-                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Email,encryotedemail),
                     new Claim("UserId", user.UserId.ToString())
                 }),
-                Expires = DateTime.UtcNow.AddHours(1),
+                Expires = DateTime.UtcNow.AddMinutes(1),
                 Issuer = _configuration["Jwt:Issuer"],
                 Audience = _configuration["Jwt:Audience"],
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -262,14 +278,27 @@ namespace AuthMicroservice.Application.UseCases
         private (string AccessToken, string RefreshToken) GenerateTokens(OAuthUser oAuthUser)
         {
             var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]);
+            var EmailEncrptkey = Encoding.UTF8.GetBytes(_configuration["Jwt:EncryptionKey"]);
             var tokenHandler = new JwtSecurityTokenHandler();
+
+            var privateData = new
+            {
+                email = oAuthUser.Email,
+            };
+
+            string encryotedemail = Jose.JWT.Encode(
+                   privateData,
+                   EmailEncrptkey,
+                   JweAlgorithm.A256KW,
+                   JweEncryption.A256CBC_HS512
+                );
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new[]
                 {
                     new Claim(ClaimTypes.Name, oAuthUser.Username),
                     new Claim(ClaimTypes.Role, oAuthUser.Role),
-                    new Claim(ClaimTypes.Email, oAuthUser.Email),
+                    new Claim(ClaimTypes.Email, encryotedemail),
                     new Claim("UserId", oAuthUser.OAuthUserId.ToString())
                 }),
                 Expires = DateTime.UtcNow.AddHours(1),
@@ -324,6 +353,12 @@ namespace AuthMicroservice.Application.UseCases
 
             if (otpRecord.Otp != dto.Otp)
                 throw new Exception("Invalid OTP");
+
+            var userrefresh = await _userRepository.GetByEmailAsync(dto.Email);
+            if (userrefresh.RefreshToken != null)
+            {
+                throw new Exception("User Already Logged in");
+            }
 
             otpRecord.IsUsed = true;
             await _userOtpRepository.MarkUse(otpRecord.UserOtpID);

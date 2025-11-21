@@ -240,18 +240,18 @@ namespace AuthMicroservice.Application.UseCases
             var EmailEncrptkey = Encoding.UTF8.GetBytes(_configuration["Jwt:EncryptionKey"]);
             var tokenHandler = new JwtSecurityTokenHandler();
 
-            var privateData = new
-            {
-                email = user.Email,
-            };
+            //var privateData = new
+            //{
+            //    email = user.Email,
+            //};
 
 
-            string encryotedemail = Jose.JWT.Encode(
-                   privateData,
-                   EmailEncrptkey,
-                   JweAlgorithm.A256KW,
-                   JweEncryption.A256CBC_HS512
-                );
+            //string encryotedemail = Jose.JWT.Encode(
+            //       privateData,
+            //       EmailEncrptkey,
+            //       JweAlgorithm.A256KW,
+            //       JweEncryption.A256CBC_HS512
+            //    );
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -259,7 +259,7 @@ namespace AuthMicroservice.Application.UseCases
                 {
                     new Claim(ClaimTypes.Name, user.Username),
                     new Claim(ClaimTypes.Role, user.Role),
-                    new Claim(ClaimTypes.Email,encryotedemail),
+                    new Claim(ClaimTypes.Email,user.Email),
                     new Claim("UserId", user.UserId.ToString())
                 }),
                 Expires = DateTime.UtcNow.AddMinutes(1),

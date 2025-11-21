@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AuthMicroservice.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class initial : Migration
+    public partial class setup : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -30,6 +30,22 @@ namespace AuthMicroservice.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserOtp",
+                columns: table => new
+                {
+                    UserOtpID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Otp = table.Column<int>(type: "int", nullable: false),
+                    ExpiryAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsUsed = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserOtp", x => x.UserOtpID);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
@@ -39,7 +55,7 @@ namespace AuthMicroservice.Infrastructure.Migrations
                     Email = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     PasswordHash = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
                     Role = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    RefreshToken = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    RefreshToken = table.Column<string>(type: "varchar(255)", unicode: false, maxLength: 255, nullable: true),
                     RefreshTokenExpiry = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
@@ -54,6 +70,11 @@ namespace AuthMicroservice.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Users_RefreshToken",
+                table: "Users",
+                column: "RefreshToken");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Users_Username",
                 table: "Users",
                 column: "Username",
@@ -65,6 +86,9 @@ namespace AuthMicroservice.Infrastructure.Migrations
         {
             migrationBuilder.DropTable(
                 name: "OAuthUsers");
+
+            migrationBuilder.DropTable(
+                name: "UserOtp");
 
             migrationBuilder.DropTable(
                 name: "Users");

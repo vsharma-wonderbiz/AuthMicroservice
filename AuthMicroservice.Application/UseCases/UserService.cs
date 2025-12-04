@@ -402,6 +402,26 @@ namespace AuthMicroservice.Application.UseCases
         }
 
 
+        public async Task<bool> GetTourStatusAsync(int userId)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+                throw new Exception("User not found");
+
+            return user.IsTourCompleted;
+        }
+
+        public async Task MarkTourCompletedAsync(int userId)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+                throw new Exception("User not found");
+
+            user.IsTourCompleted = true;
+            await _userRepository.UpdateAsync(user);
+        }
+
+
 
 
 

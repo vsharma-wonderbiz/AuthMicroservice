@@ -218,75 +218,75 @@ namespace AuthMicroservice.Controllers
             }
         }
 
-        [HttpPost("refresh-token")]
-        public async Task<IActionResult> RefreshToken()
-        {
-            try
+            [HttpPost("refresh-token")]
+            public async Task<IActionResult> RefreshToken()
             {
-                var refreshToken = Request.Cookies["refresh_token"];
-                var (accessToken, newRefreshToken) = await _userService.RefreshTokenAsync(refreshToken);
-
-                Response.Cookies.Append("access_token", accessToken, new CookieOptions
+                try
                 {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.None,
-                    Path = "/",
-                    MaxAge = TimeSpan.FromHours(1)
-                });
+                    var refreshToken = Request.Cookies["refresh_token"];
+                    var (accessToken, newRefreshToken) = await _userService.RefreshTokenAsync(refreshToken);
 
-                Response.Cookies.Append("refresh_token", newRefreshToken, new CookieOptions
+                    Response.Cookies.Append("access_token", accessToken, new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = false,
+                        SameSite = SameSiteMode.None,
+                        Path = "/",
+                        MaxAge = TimeSpan.FromHours(1)
+                    });
+
+                    Response.Cookies.Append("refresh_token", newRefreshToken, new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = false,
+                        SameSite = SameSiteMode.None,
+                        Path = "/",
+                        Expires = DateTime.UtcNow.AddDays(7)
+                    });
+
+                    return Ok(new { access_token = accessToken });
+                }
+                catch (Exception ex)
                 {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.None,
-                    Path = "/",
-                    Expires = DateTime.UtcNow.AddDays(7)
-                });
-
-                return Ok(new { access_token = accessToken });
-            }
-            catch (Exception ex)
-            {
-                return Unauthorized(new { Message = ex.Message });
-            }
-        }
-
-        [HttpPost("OtpVerify")]
-        public async Task<IActionResult> VerifyOtp([FromBody] OtpDto dto)
-        {
-            try
-            {
-                var (accessToken, refreshToken) = await _userService.VerifyOtpAndGenerateJwt(dto);
-
-                var accessCookieOption = new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.None,
-                    Path = "/",
-                    MaxAge = TimeSpan.FromHours(1)
-                };
-                Response.Cookies.Append("access_token", accessToken, accessCookieOption);
-
-                var refreshCookieOption = new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.None,
-                    Path = "/",
-                    Expires = DateTime.UtcNow.AddDays(7)
-                };
-                Response.Cookies.Append("refresh_token", refreshToken, refreshCookieOption);
-                return Ok(new { access_token = accessToken, refresh_token = refreshToken, message = "Login successful" });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { Message = ex.Message });
+                    return Unauthorized(new { Message = ex.Message });
+                }
             }
 
+        //[HttpPost("OtpVerify")]
+        //public async Task<IActionResult> VerifyOtp([FromBody] OtpDto dto)
+        //{
+        //    try
+        //    {
+        //        var (accessToken, refreshToken) = await _userService.VerifyOtpAndGenerateJwt(dto);
 
-        }
+        //        var accessCookieOption = new CookieOptions
+        //        {
+        //            HttpOnly = true,
+        //            Secure = true,
+        //            SameSite = SameSiteMode.None,
+        //            Path = "/",
+        //            MaxAge = TimeSpan.FromHours(1)
+        //        };
+        //        Response.Cookies.Append("access_token", accessToken, accessCookieOption);
+
+        //        var refreshCookieOption = new CookieOptions
+        //        {
+        //            HttpOnly = true,
+        //            Secure = true,
+        //            SameSite = SameSiteMode.None,
+        //            Path = "/",
+        //            Expires = DateTime.UtcNow.AddDays(7)
+        //        };
+        //        Response.Cookies.Append("refresh_token", refreshToken, refreshCookieOption);
+        //        return Ok(new { access_token = accessToken, refresh_token = refreshToken, message = "Login successful" });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(new { Message = ex.Message });
+        //    }
+
+
+        //}
 
     }
 }

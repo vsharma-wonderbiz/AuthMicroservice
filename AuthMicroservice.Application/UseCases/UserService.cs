@@ -114,7 +114,7 @@ namespace AuthMicroservice.Application.UseCases
             var (accessToken, refreshToken) = GenerateTokens(user);
 
             // Hash and store refresh token in the existing RefreshToken column
-            user.RefreshToken = HashToken(refreshToken);
+            user.RefreshToken =refreshToken;
             user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7); // use config instead of hardcoded value
             await _userRepository.UpdateAsync(user);
 
@@ -217,8 +217,35 @@ namespace AuthMicroservice.Application.UseCases
             }
         }
 
+        //public async Task LogoutAsync(string refreshToken)
+        //{
+        //    if (!string.IsNullOrEmpty(refreshToken))
+        //        throw new Exception("No refresh token provided");
+
+        //    var user = await _userRepository.GetByRefreshTokenAsync(refreshToken);
+        //    if (user != null)
+        //    {
+        //        user.RefreshToken = null;
+        //        user.RefreshTokenExpiry = null;
+        //        await _userRepository.UpdateAsync(user);
+        //        return;
+        //    }
+
+        //    var oAuthUser = await _oAuthUserRepository.GetByRefreshTokenAsync(refreshToken);
+        //    if (oAuthUser != null)
+        //    {
+        //        oAuthUser.RefreshToken = null;
+        //        await _oAuthUserRepository.UpdateAsync(oAuthUser);
+        //        return;
+        //    }
+
+        //    throw new Exception("Refresh token not found");
+        //}
+
+
         public async Task<UserDto> GetCurrentUserAsync(ClaimsIdentity identity)
         {
+            Console.WriteLine(identity);
             if (identity == null || !identity.IsAuthenticated)
                 throw new Exception("User is not authenticated.");
 
@@ -262,7 +289,7 @@ namespace AuthMicroservice.Application.UseCases
                     new Claim(ClaimTypes.Email,user.Email),
                     new Claim("UserId", user.UserId.ToString())
                 }),
-                Expires = DateTime.UtcNow.AddMinutes(1),
+                Expires = DateTime.UtcNow.AddHours(1),
                 Issuer = _configuration["Jwt:Issuer"],
                 Audience = _configuration["Jwt:Audience"],
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)

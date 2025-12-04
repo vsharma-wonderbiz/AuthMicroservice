@@ -262,7 +262,7 @@ namespace AuthMicroservice.Application.UseCases
                     new Claim(ClaimTypes.Email,user.Email),
                     new Claim("UserId", user.UserId.ToString())
                 }),
-                Expires = DateTime.UtcNow.AddMinutes(1),
+                Expires = DateTime.UtcNow.AddHours(1),
                 Issuer = _configuration["Jwt:Issuer"],
                 Audience = _configuration["Jwt:Audience"],
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -372,6 +372,26 @@ namespace AuthMicroservice.Application.UseCases
             await _userRepository.UpdateAsync(user);
 
             return (accessToken, refreshToken);
+        }
+
+
+        public async Task<bool> GetTourStatusAsync(int userId)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+                throw new Exception("User not found");
+
+            return user.IsTourCompleted;
+        }
+
+        public async Task MarkTourCompletedAsync(int userId)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+                throw new Exception("User not found");
+
+            user.IsTourCompleted = true;
+            await _userRepository.UpdateAsync(user);
         }
 
 

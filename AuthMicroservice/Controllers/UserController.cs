@@ -219,37 +219,102 @@ namespace AuthMicroservice.Controllers
         }
 
             [HttpPost("refresh-token")]
-            public async Task<IActionResult> RefreshToken()
+public async Task<IActionResult> RefreshToken()
+{
+    try
+    {
+        var refreshToken = Request.Cookies["refresh_token"];
+        var (accessToken, newRefreshToken) = await _userService.RefreshTokenAsync(refreshToken);
+
+        Response.Cookies.Append("access_token", accessToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = false,
+            SameSite = SameSiteMode.None,
+            Path = "/",
+            MaxAge = TimeSpan.FromHours(1)
+        });
+
+        Response.Cookies.Append("refresh_token", newRefreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = false,
+            SameSite = SameSiteMode.None,
+            Path = "/",
+            Expires = DateTime.UtcNow.AddDays(7)
+        });
+
+        return Ok(new { access_token = accessToken });
+    }
+    catch (Exception ex)
+    {
+        return Unauthorized(new { Message = ex.Message });
+    }
+}
+
+
+        // GET: api/user/tour-status
+        [HttpGet("tour-status")]
+        public async Task<IActionResult> GetTourStatus()
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            var userIdClaim = identity?.FindFirst("UserId")?.Value;
+
+            if (userIdClaim == null) return Unauthorized();
+
+            var userId = int.Parse(userIdClaim);
+            var isTourCompleted = await _userService.GetTourStatusAsync(userId);
+
+            return Ok(new { isTourCompleted });
+        }
+
+
+        // POST: api/user/complete-tour
+        [HttpPost("complete-tour")]
+        public async Task<IActionResult> CompleteTour()
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            var userIdClaim = identity?.FindFirst("UserId")?.Value;
+            if (userIdClaim == null) return Unauthorized();
+
+            var userId = int.Parse(userIdClaim);
+            await _userService.MarkTourCompletedAsync(userId);
+
+            return Ok();
+        }
+
+
+        [HttpPost("OtpVerify")]
+        public async Task<IActionResult> VerifyOtp([FromBody] OtpDto dto)
+        {
+            try
             {
-                try
+                var (accessToken, refreshToken) = await _userService.VerifyOtpAndGenerateJwt(dto);
+
+                var accessCookieOption = new CookieOptions
                 {
-                    var refreshToken = Request.Cookies["refresh_token"];
-                    var (accessToken, newRefreshToken) = await _userService.RefreshTokenAsync(refreshToken);
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Path = "/",
+                    MaxAge = TimeSpan.FromHours(1)
+                };
+                Response.Cookies.Append("access_token", accessToken, accessCookieOption);
 
-                    Response.Cookies.Append("access_token", accessToken, new CookieOptions
-                    {
-                        HttpOnly = true,
-                        Secure = false,
-                        SameSite = SameSiteMode.None,
-                        Path = "/",
-                        MaxAge = TimeSpan.FromHours(1)
-                    });
-
-                    Response.Cookies.Append("refresh_token", newRefreshToken, new CookieOptions
-                    {
-                        HttpOnly = true,
-                        Secure = false,
-                        SameSite = SameSiteMode.None,
-                        Path = "/",
-                        Expires = DateTime.UtcNow.AddDays(7)
-                    });
-
-                    return Ok(new { access_token = accessToken });
-                }
-                catch (Exception ex)
+                var refreshCookieOption = new CookieOptions
                 {
-                    return Unauthorized(new { Message = ex.Message });
-                }
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Path = "/",
+                    Expires = DateTime.UtcNow.AddDays(7)
+                };
+                Response.Cookies.Append("refresh_token", refreshToken, refreshCookieOption);
+                return Ok(new { access_token = accessToken, refresh_token = refreshToken, message = "Login successful" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
             }
 
         //[HttpPost("OtpVerify")]

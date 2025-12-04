@@ -252,6 +252,37 @@ namespace AuthMicroservice.Controllers
             }
         }
 
+        // GET: api/user/tour-status
+        [HttpGet("tour-status")]
+        public async Task<IActionResult> GetTourStatus()
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            var userIdClaim = identity?.FindFirst("UserId")?.Value;
+
+            if (userIdClaim == null) return Unauthorized();
+
+            var userId = int.Parse(userIdClaim);
+            var isTourCompleted = await _userService.GetTourStatusAsync(userId);
+
+            return Ok(new { isTourCompleted });
+        }
+
+
+        // POST: api/user/complete-tour
+        [HttpPost("complete-tour")]
+        public async Task<IActionResult> CompleteTour()
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            var userIdClaim = identity?.FindFirst("UserId")?.Value;
+            if (userIdClaim == null) return Unauthorized();
+
+            var userId = int.Parse(userIdClaim);
+            await _userService.MarkTourCompletedAsync(userId);
+
+            return Ok();
+        }
+
+
         [HttpPost("OtpVerify")]
         public async Task<IActionResult> VerifyOtp([FromBody] OtpDto dto)
         {

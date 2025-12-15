@@ -174,8 +174,6 @@ namespace AuthMicroservice.Controllers
         }
 
         [HttpGet("me")]
-
-
         public async Task<IActionResult> GetCurrentUser()
         {
             try
@@ -319,5 +317,34 @@ namespace AuthMicroservice.Controllers
 
         }
 
+
+
+        [Authorize(Roles ="Admin")]
+        [HttpPatch("{id}/role")]
+        public async Task<IActionResult> UpdateUserRole([FromRoute] int id, [FromBody] RoleUpdateDto dto)
+        {
+            if (dto == null)
+                return BadRequest("Request body cannot be null.");
+
+            try
+            {
+                await _userService.UpdateUserRoleAsync(id, dto.Role);
+                return Ok(new { Message = $"Role updated successfully Please Login Again" +
+                    $"" });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { Error = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { Error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Error = "Something went wrong.", Details = ex.Message });
+            }
+
+        }
     }
 }

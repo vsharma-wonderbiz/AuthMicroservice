@@ -35,5 +35,7 @@ namespace AuthMicroservice.Application.Interface
         Task<bool> GetTourStatusAsync(int userId);
         Task MarkTourCompletedAsync(int userId);
 
+        Task UpdateUserRoleAsync(int userId, string role);
+
     }
 }

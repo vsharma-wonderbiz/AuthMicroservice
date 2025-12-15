@@ -18,5 +18,6 @@ namespace AuthMicroservice.Domain.Interface
         Task DeleteAsync(int id);
         Task<bool> UsernameExistsAsync(string username, int? excludeId = null);
         Task<bool> EmailExistsAsync(string email, int? excludeId = null);
+        Task SaveChangesAsync();
     }
 }

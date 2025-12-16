@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AuthMicroservice.Infrastructure.Migrations
 {
     [DbContext(typeof(UserDbContext))]
-    [Migration("20251121053052_setup")]
-    partial class setup
+    [Migration("20251121082612_init2")]
+    partial class init2
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

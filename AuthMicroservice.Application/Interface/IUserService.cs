@@ -32,5 +32,10 @@ namespace AuthMicroservice.Application.Interface
 
         // Current user from claims
         Task<UserDto> GetCurrentUserAsync(ClaimsIdentity identity);
+        Task<bool> GetTourStatusAsync(int userId);
+        Task MarkTourCompletedAsync(int userId);
+
+        Task UpdateUserRoleAsync(int userId, string role);
+
     }
 }

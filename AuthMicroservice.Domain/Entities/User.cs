@@ -36,5 +36,7 @@ namespace AuthMicroservice.Domain.Entities
         public string? RefreshToken { get; set; }
 
         public DateTime? RefreshTokenExpiry { get; set; }
+
+        public bool IsTourCompleted { get; set; } = false;
     }
 }

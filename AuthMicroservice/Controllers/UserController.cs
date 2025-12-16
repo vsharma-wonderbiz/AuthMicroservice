@@ -174,8 +174,6 @@ namespace AuthMicroservice.Controllers
         }
 
         [HttpGet("me")]
-
-
         public async Task<IActionResult> GetCurrentUser()
         {
             try
@@ -252,6 +250,37 @@ namespace AuthMicroservice.Controllers
             }
         }
 
+        // GET: api/user/tour-status
+        [HttpGet("tour-status")]
+        public async Task<IActionResult> GetTourStatus()
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            var userIdClaim = identity?.FindFirst("UserId")?.Value;
+
+            if (userIdClaim == null) return Unauthorized();
+
+            var userId = int.Parse(userIdClaim);
+            var isTourCompleted = await _userService.GetTourStatusAsync(userId);
+
+            return Ok(new { isTourCompleted });
+        }
+
+
+        // POST: api/user/complete-tour
+        [HttpPost("complete-tour")]
+        public async Task<IActionResult> CompleteTour()
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            var userIdClaim = identity?.FindFirst("UserId")?.Value;
+            if (userIdClaim == null) return Unauthorized();
+
+            var userId = int.Parse(userIdClaim);
+            await _userService.MarkTourCompletedAsync(userId);
+
+            return Ok();
+        }
+
+
         [HttpPost("OtpVerify")]
         public async Task<IActionResult> VerifyOtp([FromBody] OtpDto dto)
         {
@@ -288,5 +317,34 @@ namespace AuthMicroservice.Controllers
 
         }
 
+
+
+        [Authorize(Roles ="Admin")]
+        [HttpPatch("{id}/role")]
+        public async Task<IActionResult> UpdateUserRole([FromRoute] int id, [FromBody] RoleUpdateDto dto)
+        {
+            if (dto == null)
+                return BadRequest("Request body cannot be null.");
+
+            try
+            {
+                await _userService.UpdateUserRoleAsync(id, dto.Role);
+                return Ok(new { Message = $"Role updated successfully Please Login Again" +
+                    $"" });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { Error = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { Error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Error = "Something went wrong.", Details = ex.Message });
+            }
+
+        }
     }
 }

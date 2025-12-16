@@ -25,6 +25,7 @@ namespace AuthMicroservice.Application.UseCases
         private readonly IConfiguration _configuration;
         private readonly IUserOtpRepository _userOtpRepository;
         private readonly IEamilService _eamilService;
+        private readonly List<string> _validRoles = new() { "Admin", "User", "Manager", "Engineer" };
 
         public UserService(IUserRepository userRepository, IOAuthUserRepository oAuthUserRepository, IMapper mapper, IConfiguration configuration, IUserOtpRepository userOtpRepository, IEamilService eamilService)
         {
@@ -114,7 +115,7 @@ namespace AuthMicroservice.Application.UseCases
             var (accessToken, refreshToken) = GenerateTokens(user);
 
             // Hash and store refresh token in the existing RefreshToken column
-            user.RefreshToken = HashToken(refreshToken);
+            user.RefreshToken = refreshToken;
             user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7); // use config instead of hardcoded value
             await _userRepository.UpdateAsync(user);
 
@@ -375,25 +376,62 @@ namespace AuthMicroservice.Application.UseCases
         }
 
 
-
-
-
-        private static string HashToken(string token)
+        public async Task<bool> GetTourStatusAsync(int userId)
         {
-            if (string.IsNullOrEmpty(token)) return string.Empty;
-            using var sha = SHA256.Create();
-            var bytes = Encoding.UTF8.GetBytes(token);
-            var hash = sha.ComputeHash(bytes);
-            return Convert.ToBase64String(hash);
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+                throw new Exception("User not found");
+
+            return user.IsTourCompleted;
         }
 
-        private static bool VerifyHashedToken(string token, string? storedHash)
+        public async Task MarkTourCompletedAsync(int userId)
         {
-            if (string.IsNullOrEmpty(storedHash)) return false;
-            var candidateHash = HashToken(token);
-            return CryptographicOperations.FixedTimeEquals(
-                Encoding.UTF8.GetBytes(candidateHash),
-                Encoding.UTF8.GetBytes(storedHash));
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+                throw new Exception("User not found");
+
+            user.IsTourCompleted = true;
+            await _userRepository.UpdateAsync(user);
+        }
+
+
+
+
+
+        //private static string HashToken(string token)
+        //{
+        //    if (string.IsNullOrEmpty(token)) return string.Empty;
+        //    using var sha = SHA256.Create();
+        //    var bytes = Encoding.UTF8.GetBytes(token);
+        //    var hash = sha.ComputeHash(bytes);
+        //    return Convert.ToBase64String(hash);
+        //}
+
+        //private static bool VerifyHashedToken(string token, string? storedHash)
+        //{
+        //    if (string.IsNullOrEmpty(storedHash)) return false;
+        //    var candidateHash = HashToken(token);
+        //    return CryptographicOperations.FixedTimeEquals(
+        //        Encoding.UTF8.GetBytes(candidateHash),
+        //        Encoding.UTF8.GetBytes(storedHash));
+        //}
+
+
+        public async Task UpdateUserRoleAsync(int userId, string role)
+        {
+            if (string.IsNullOrWhiteSpace(role))
+                throw new ArgumentException("Role cannot be empty.");
+
+            if (!_validRoles.Contains(role))
+                throw new ArgumentException($"Invalid role: {role}");
+
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+                throw new KeyNotFoundException($"No user found with ID {userId}");
+
+            user.Role = role;
+            await _userRepository.SaveChangesAsync();
         }
 
 

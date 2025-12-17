@@ -25,7 +25,7 @@ namespace AuthMicroservice.Application.UseCases
         private readonly IConfiguration _configuration;
         private readonly IUserOtpRepository _userOtpRepository;
         private readonly IEamilService _eamilService;
-        private readonly List<string> _validRoles = new() { "Admin", "User", "Manager", "Engineer" };
+        private readonly List<string> _validRoles = new() { "Admin", "User", "Operator", "Engineer" };
 
         public UserService(IUserRepository userRepository, IOAuthUserRepository oAuthUserRepository, IMapper mapper, IConfiguration configuration, IUserOtpRepository userOtpRepository, IEamilService eamilService)
         {

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35931.197 d17.13
+VisualStudioVersion = 17.13.35931.197
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthMicroservice", "AuthMicroservice\AuthMicroservice.csproj", "{23CA91D7-2F16-48F8-B18F-75A443F440CB}"
 EndProject
@@ -10,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthMicroservice.Infrastructure", "AuthMicroservice.Infrastructure\AuthMicroservice.Infrastructure.csproj", "{ADA3BF2D-3C77-451D-9625-69443BC49875}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthMicroservice.Application", "AuthMicroservice.Application\AuthMicroservice.Application.csproj", "{263A212C-F6F7-471A-A0C7-C95BC7F51F24}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthMicroservice.Tests", "AuthMicroservice.Tests\AuthMicroservice.Tests.csproj", "{1999E083-3DB7-440E-958A-427939CC70F4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{263A212C-F6F7-471A-A0C7-C95BC7F51F24}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{263A212C-F6F7-471A-A0C7-C95BC7F51F24}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{263A212C-F6F7-471A-A0C7-C95BC7F51F24}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1999E083-3DB7-440E-958A-427939CC70F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1999E083-3DB7-440E-958A-427939CC70F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1999E083-3DB7-440E-958A-427939CC70F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1999E083-3DB7-440E-958A-427939CC70F4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

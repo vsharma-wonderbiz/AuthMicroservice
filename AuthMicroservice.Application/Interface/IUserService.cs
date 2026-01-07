@@ -21,7 +21,7 @@ namespace AuthMicroservice.Application.Interface
         Task<(string AccessToken, string RefreshToken)> LoginAsync(LoginDto loginDto);
 
         // OTP flow
-        Task<(string AccessToken, string RefreshToken)> VerifyOtpAndGenerateJwt(OtpDto dto);
+        //Task<(string AccessToken, string RefreshToken)> VerifyOtpAndGenerateJwt(OtpDto dto);
 
         // OAuth flow (Google) returns JWT for OAuth user + DTO
         Task<(string AccessToken, OAuthUserDto OAuthUser)> HandleGoogleCallbackAsync(AuthenticationTicket ticket);

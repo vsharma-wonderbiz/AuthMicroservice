@@ -23,18 +23,18 @@ namespace AuthMicroservice.Application.UseCases
         private readonly IOAuthUserRepository _oAuthUserRepository;
         private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
-        private readonly IUserOtpRepository _userOtpRepository;
-        private readonly IEamilService _eamilService;
+        //private readonly IUserOtpRepository _userOtpRepository;
+        //private readonly IEamilService _eamilService;
         private readonly List<string> _validRoles = new() { "Admin", "User", "Operator", "Engineer" };
 
-        public UserService(IUserRepository userRepository, IOAuthUserRepository oAuthUserRepository, IMapper mapper, IConfiguration configuration, IUserOtpRepository userOtpRepository, IEamilService eamilService)
+        public UserService(IUserRepository userRepository, IOAuthUserRepository oAuthUserRepository, IMapper mapper, IConfiguration configuration)
         {
             _userRepository = userRepository;
             _oAuthUserRepository = oAuthUserRepository;
             _mapper = mapper;
             _configuration = configuration;
-            _userOtpRepository = userOtpRepository;
-            _eamilService = eamilService;
+            //_userOtpRepository = userOtpRepository;
+            //_eamilService = eamilService;
         }
 
         public async Task<List<UserDto>> GetAllAsync()
@@ -339,41 +339,41 @@ namespace AuthMicroservice.Application.UseCases
         }
 
 
-        public async Task<(string AccessToken, string RefreshToken)> VerifyOtpAndGenerateJwt(OtpDto dto)
-        {
-            var otpRecord = await _userOtpRepository.GetLatestOtp(dto.Email);
+        //public async Task<(string AccessToken, string RefreshToken)> VerifyOtpAndGenerateJwt(OtpDto dto)
+        //{
+        //    //var otpRecord = await _userOtpRepository.GetLatestOtp(dto.Email);
 
-            if (otpRecord == null)
-                throw new Exception("OTP not found");
+        //    if (otpRecord == null)
+        //        throw new Exception("OTP not found");
 
-            if (otpRecord.IsUsed)
-                throw new Exception("OTP already used");
+        //    if (otpRecord.IsUsed)
+        //        throw new Exception("OTP already used");
 
-            if (otpRecord.ExpiryAt < DateTime.UtcNow)
-                throw new Exception("OTP expired");
+        //    if (otpRecord.ExpiryAt < DateTime.UtcNow)
+        //        throw new Exception("OTP expired");
 
-            if (otpRecord.Otp != dto.Otp)
-                throw new Exception("Invalid OTP");
+        //    if (otpRecord.Otp != dto.Otp)
+        //        throw new Exception("Invalid OTP");
 
-            var userrefresh = await _userRepository.GetByEmailAsync(dto.Email);
-            if (userrefresh.RefreshToken != null)
-            {
-                throw new Exception("User Already Logged in");
-            }
+        //    var userrefresh = await _userRepository.GetByEmailAsync(dto.Email);
+        //    if (userrefresh.RefreshToken != null)
+        //    {
+        //        throw new Exception("User Already Logged in");
+        //    }
 
-            otpRecord.IsUsed = true;
-            await _userOtpRepository.MarkUse(otpRecord.UserOtpID);
+        //    otpRecord.IsUsed = true;
+        //    await _userOtpRepository.MarkUse(otpRecord.UserOtpID);
 
-            var user = await _userRepository.GetByEmailAsync(dto.Email);
+        //    var user = await _userRepository.GetByEmailAsync(dto.Email);
 
-            var (accessToken, refreshToken) = GenerateTokens(user);
+        //    var (accessToken, refreshToken) = GenerateTokens(user);
 
-            user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7);
-            await _userRepository.UpdateAsync(user);
+        //    user.RefreshToken = refreshToken;
+        //    user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7);
+        //    await _userRepository.UpdateAsync(user);
 
-            return (accessToken, refreshToken);
-        }
+        //    return (accessToken, refreshToken);
+        //}
 
 
         public async Task<bool> GetTourStatusAsync(int userId)

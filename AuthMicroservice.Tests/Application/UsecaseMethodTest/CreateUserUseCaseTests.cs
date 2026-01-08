@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AuthMicroservice.Application.Dtos;
 using AuthMicroservice.Application.UseCases;
+using AuthMicroservice.Application.Validators;
 using AuthMicroservice.Domain.Entities;
 using AuthMicroservice.Domain.Interface;
 using AutoMapper;
@@ -35,13 +36,14 @@ namespace AuthMicroservice.Tests.Application.UsecaseMethodTest
         }
 
         [Fact]
+        //happy path test means ki uer create ho raha hai ya nhi 
         public async Task CreateUser_ValidInput_UserIsCreated()
         {
             // Arrange
             var dto = new CreateUserDto
             {
-                Username = "vinay",
-                Email = "vinay@test.com",
+                Username = "Vinay",
+                Email = "Vinay@example.com",
                 Password = "Password123!",
                 Role = "User"
             };
@@ -76,6 +78,51 @@ namespace AuthMicroservice.Tests.Application.UsecaseMethodTest
                 r => r.AddAsync(It.IsAny<User>()),
                 Times.Once
             );
+        }
+
+
+        [Fact]
+        public async Task CreateUser_ExistingUsername_ThrowsException()
+        {
+           
+            var dto = new CreateUserDto
+            {
+                Username = "Vinay",
+                Email = "vinay@example.com",
+                Password = "Password123!"
+            };
+
+            _mockUserRepository.Setup(x => x.UsernameExistsAsync(dto.Username, null))
+                               .ReturnsAsync(true);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(
+                () => _userService.CreateAsync(dto)
+            );
+
+
+        }
+
+        [Fact]
+        public async Task CreateUser_ExistingEmail_ThrowsException()
+        {
+
+            var dto = new CreateUserDto
+            {
+                Username = "Vinay",
+                Email = "vinay@example.com",
+                Password = "Password123!"
+            };
+
+            _mockUserRepository.Setup(x => x.EmailExistsAsync(dto.Email, null))
+                  .ReturnsAsync(true);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(
+                () => _userService.CreateAsync(dto)
+            );
+
+
         }
     }
 }

@@ -10,6 +10,9 @@ using Serilog;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Resources;
 using System.Diagnostics;
+using FluentValidation;
+using AuthMicroservice.Application.Validators;
+using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,12 +31,15 @@ builder.Services.AddHttpClient("Ocelot")
 
 
 // ---------- Services ----------
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddFluentValidation(fv => fv.DisableDataAnnotationsValidation = true); ;
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddCustomServices();
 builder.Services.AddCustomAuthentication(builder.Configuration);
+
+//validators registrion 
+builder.Services.AddValidatorsFromAssemblyContaining<CreateUserDtoValidator>();
 
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 

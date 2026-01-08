@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthMicroservice.Applicatio
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthMicroservice.Tests", "AuthMicroservice.Tests\AuthMicroservice.Tests.csproj", "{1999E083-3DB7-440E-958A-427939CC70F4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthMicroservice.IntegrationTests", "AuthMicroservice.IntegrationTests\AuthMicroservice.IntegrationTests.csproj", "{02BCA085-F2A2-413E-AAD9-0CBF9758AC36}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{1999E083-3DB7-440E-958A-427939CC70F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1999E083-3DB7-440E-958A-427939CC70F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1999E083-3DB7-440E-958A-427939CC70F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02BCA085-F2A2-413E-AAD9-0CBF9758AC36}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02BCA085-F2A2-413E-AAD9-0CBF9758AC36}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02BCA085-F2A2-413E-AAD9-0CBF9758AC36}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02BCA085-F2A2-413E-AAD9-0CBF9758AC36}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

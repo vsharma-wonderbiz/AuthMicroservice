@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ namespace AuthMicroservice.Domain.Entities
 {
     public class OAuthUser
     {
+        
         public int OAuthUserId { get; set; }
         public string Email { get; set; }
         public string Username { get; set; }

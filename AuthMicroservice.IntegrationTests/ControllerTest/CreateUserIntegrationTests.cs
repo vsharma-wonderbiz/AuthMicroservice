@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AuthMicroservice.Application.Dtos;
 using AuthMicroservice.IntegrationTests.CustomWebApplication;
+using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace AuthMicroservice.IntegrationTests.ControllerTest
 {
@@ -17,7 +18,10 @@ namespace AuthMicroservice.IntegrationTests.ControllerTest
 
         public CreateUserIntegrationTests(CustomWebApplicationFactory factory)
         {
-            _client = factory.CreateClient();
+            _client = factory.CreateClient(new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false
+            });
         }
 
         [Fact]
@@ -30,7 +34,7 @@ namespace AuthMicroservice.IntegrationTests.ControllerTest
                 Password="Vinay@123",
             };
 
-            var response = await _client.PostAsJsonAsync("/api/User/Resgiter", dto);
+            var response = await _client.PostAsJsonAsync("/api/User/Register", dto);
 
             Assert.Equal(HttpStatusCode.Created,response.StatusCode);
 
